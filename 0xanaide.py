@@ -2,6 +2,9 @@ import sys, requests
 from tqdm import tqdm
 from multiprocessing import Process, freeze_support
 import time 
+import psutil
+
+f = open("result.txt", "a")
 
 def request(user):
     try:
@@ -13,7 +16,6 @@ def request(user):
         return result
     except KeyboardInterrupt:
         sys.exit()
-        f.close()
 
 if __name__ == "__main__":
     freeze_support()
@@ -24,10 +26,18 @@ if __name__ == "__main__":
         lc = len(lines)
         processes = []
         for i in tqdm(range(0, lc)):
+            cpu_usage = psutil.cpu_percent()
+            if cpu_usage > 80:
+                while True:
+                    cpu_usage = psutil.cpu_percent()
+                    if cpu_usage < 80:
+                        break
+                    time.sleep(0.2)
             p = Process(target=request, args=(lines[i],))
             processes.append(p)
             p.start()
-            time.sleep(0.1)
+            time.sleep(0.01)
+            #time.sleep(0.1)
         while True:
             for p in processes:
                 if not p.is_alive():
@@ -36,6 +46,6 @@ if __name__ == "__main__":
                 break
             time.sleep(0.1)
             pass
+        f.close()
     except KeyboardInterrupt:
         sys.exit()
-        f.close()
